@@ -1,25 +1,36 @@
-import logo from './logo.svg';
-import './App.css';
+import {
+	Layout
+} from 'antd';
+
+import LinkRouter from './shared/components/LinkRouter/LinkRouter'
+import { BrowserRouter as Router, Route, Redirect } from 'react-router-dom';
+import NavigationBar from './shared/components/NavigationBar/NavigationBar'
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+	const {  Content } = Layout;
+	return (
+		<Layout>
+			<Router>
+				<NavigationBar />
+				<Content style={{ padding: '100px 75px' }}>	
+					<Redirect exact from="/" to="/clients" />
+					<Route
+						path={'/clients'}
+						component={LinkRouter}	
+					/>
+					<Route
+						path={'/api-settings'}
+						component={LinkRouter}	
+					/>
+					<Route
+						path={'/groups'}
+						component={LinkRouter}	
+					/>
+		
+				</Content>			
+			</Router>	
+		</Layout>
+  	);
 }
 
 export default App;

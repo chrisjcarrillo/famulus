@@ -1,0 +1,19 @@
+.ant-layout{
+    height: 100vh;
+    overflow-y: hidden;
+}
+.ant-layout-header{
+    height: unset !important;
+    background: #fff !important;
+}
+.ant-menu{
+    text-align: right !important;
+    &.ant-menu-horizontal{
+        width: 80%;
+        display: inline-block;
+    }
+}
+.container{
+    background: white;
+    padding: 50px;
+}
