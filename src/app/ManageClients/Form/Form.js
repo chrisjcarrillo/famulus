@@ -60,7 +60,7 @@ class ManageClientsForm extends Component {
             this.setState({
                 clientData: responseData,
             })
-            const has_widget = this.state.clientData.client_setting.has_widget || false;
+            const has_widget = this.state.clientData.client_setting.has_widget;
             const groupId = this.state.clientData.group_id;
             if(has_widget && groupId){
                 this.setState({
