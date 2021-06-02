@@ -31,6 +31,9 @@ const NavigationBar = () => {
                         <Link to="/api-settings">API Settings</Link>
                     </Menu.Item>
                     <Menu.Item key="setting:2">
+                        <Link to="/api-logs">API Logs</Link>
+                    </Menu.Item>
+                    <Menu.Item key="setting:3">
                         Settings
                     </Menu.Item>
                 </SubMenu>

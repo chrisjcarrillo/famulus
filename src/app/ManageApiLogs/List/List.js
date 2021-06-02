@@ -6,7 +6,7 @@ import * as ENDPOINTS from '../../../shared/constants/settings';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
-class ManageApiSettings extends Component {
+class ManageApiLogs extends Component {
     state = {
         clients: [],
         loading: false
@@ -21,7 +21,7 @@ class ManageApiSettings extends Component {
     getClients = async () => {
         try {
             this.setLoading(true)
-            const clientUrl = ENDPOINTS.URL + ENDPOINTS.GET_API_SETTINGS;
+            const clientUrl = ENDPOINTS.URL + 'api_logs';
             let response = await axios.get(
                 clientUrl
             );
@@ -52,38 +52,29 @@ class ManageApiSettings extends Component {
                 key: "id"
             },
             {
-                title: 'Name',
-                dataIndex: 'name',
-                key: "name"
+                title: 'Device Type',
+                dataIndex: 'device_type',
+                key: "device_type"
             },
             {
-                title: 'API Secret',
-                dataIndex: 'api_secret',
-                key: "api_secret"
+                title: 'Endpoint',
+                dataIndex: 'endpoint',
+                key: "endpoint"
             },
             {
-                title: 'Affiliate Code',
-                dataIndex: 'api_affiliate_code',
-                key: "api_affiliate_code"
+                title: 'IP Address',
+                dataIndex: 'remote_ip',
+                key: "remote_ip"
             },
             {
-                title: 'Updated At',
-                dataIndex: 'updated_at',
-                key: "updated_at"
+                title: 'Client Type',
+                dataIndex: 'client_type',
+                key: "client_type"
             },
             {
                 title: 'Created At',
                 dataIndex: 'created_at',
                 key: "created_at"
-            },
-            {
-                title: 'Actions',
-                render: (text, record) => (
-                    <Space size="middle">
-                      <a>Edit {record.client_name}</a>
-                      <a>Delete</a>
-                    </Space>
-                ),
             }
         ]
         const dataSource = this.state.clients;
@@ -92,7 +83,7 @@ class ManageApiSettings extends Component {
                 <Row>
                     <Col lg={12}>
                         <Typography>
-                            <Title>Manage API's</Title>
+                            <Title>Manage API Logs</Title>
                         </Typography>
                     </Col>
                     <Col lg={12} style={{
@@ -109,11 +100,11 @@ class ManageApiSettings extends Component {
                 <Row>
                     <Col lg={24}>
                         <Table 
+                            scroll={{ y: 550 }}
+                            size="middle"
                             className="components-table-demo-nested"
                             dataSource={dataSource} 
                             columns={columns}
-                            scroll={{ y: 550 }}
-                            size="middle"
                             loading={this.state.loading} 
                         />
                     </Col>
@@ -123,4 +114,4 @@ class ManageApiSettings extends Component {
     }
 }
 
-export default ManageApiSettings;
+export default ManageApiLogs;

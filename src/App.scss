@@ -2,6 +2,9 @@
     height: 100vh;
     overflow-y: hidden;
 }
+.ant-layout-content{
+    overflow-y: scroll;
+}
 .ant-layout-header{
     height: unset !important;
     background: #fff !important;
@@ -15,5 +18,6 @@
 }
 .container{
     background: white;
-    padding: 50px;
+    padding: 60px 60px !important;
+    border-radius: 20px;
 }

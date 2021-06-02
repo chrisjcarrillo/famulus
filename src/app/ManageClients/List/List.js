@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Container } from 'react-bootstrap';
+import { Loading } from '../../../shared/components/Loading/Loading';
 import { Button, Col, Row, Space, Table, Typography } from 'antd';
 import { UserAddOutlined, UserDeleteOutlined, EditOutlined} from '@ant-design/icons';
 import * as ENDPOINTS from '../../../shared/constants/settings';
@@ -43,16 +44,18 @@ class ManageClients extends Component {
     }
 
     render(){
-        const { Title } = Typography;
-        
+        const { Title} = Typography;
+        const { loading, clients } = this.state;
+
         const columns = [
             {
                 title: 'ID',
                 dataIndex: 'id',
-                key: "id"
+                key: "id",
+                sorter: (a, b) => a.id - b.id,
             },
             {
-                title: 'Name',
+                title: 'Client Name',
                 dataIndex: 'client_name',
                 key: "client_name"
             },
@@ -67,7 +70,7 @@ class ManageClients extends Component {
                 key: "client_site_url"
             },
             {
-                title: 'Affiliate ID',
+                title: 'Group ID',
                 dataIndex: 'group_id',
                 key: "group_id"
             },
@@ -76,46 +79,85 @@ class ManageClients extends Component {
                 render: (text, record) => (
                     <Space size="middle">
                         <Link to={`/clients/${record.group_id}`}><EditOutlined /></Link>
-                        <Link to={`/clients/${record.group_id}`}><UserDeleteOutlined /></Link>
                     </Space>
                 ),
             }
         ]
-        const dataSource = this.state.clients;
+
+        const columnsGroup = [
+            {
+                title: 'ID',
+                dataIndex: 'id',
+                key: "id"
+            },
+            {
+                title: 'Group Name',
+                dataIndex: 'group_name',
+                key: "group_name"
+            },
+            {
+                title: 'Email',
+                dataIndex: 'email',
+                key: "email"
+            },
+            {
+                title: 'Site URL',
+                dataIndex: 'group_site_url',
+                key: "group_site_url"
+            },
+            {
+                title: 'Group ID',
+                dataIndex: 'group_id',
+                key: "group_id"
+            }
+        ]
+
+        const tableProps = {
+           
+        };
+
+
         return(
             <Container>
-                <Row>
-                    <Col lg={12}>
-                        <Typography>
-                            <Title>Manage Clients</Title>
-                        </Typography>
-                    </Col>
-                    <Col lg={12} style={{
-                        textAlign: 'right',
-                        alignSelf: 'center'
-                    }}>
-                        <Link to="clients/new">
-                            <Button type="primary" icon={
-                                <UserAddOutlined />
-                            }> Add a Client</Button>
-                        </Link>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col lg={24}>
-                        <Table 
-                            className="components-table-demo-nested"
-                            dataSource={dataSource} 
-                            columns={columns}
-                            loading={this.state.loading} 
-                        />
-                    </Col>
-                </Row>
+                <Loading loadingState={loading}>
+                    <Row>
+                        <Col lg={12}>
+                            <Typography>
+                                <Title>Manage Clients</Title>
+                            </Typography>
+                        </Col>
+                        <Col lg={12} style={{
+                            textAlign: 'right',
+                            alignSelf: 'center'
+                        }}>
+                            <Link to="clients/new">
+                                <Button type="primary" icon={
+                                    <UserAddOutlined />
+                                }> Add a Client</Button>
+                            </Link>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col lg={24}>
+                            <Table 
+                                className="components-table-demo-nested"
+                                expandable={{  
+                                    expandedRowRender: record => (
+                                        <Table columns={columnsGroup} dataSource={record.client_groups} rowKey='id'/>
+                                    ),
+                                }}
+                                dataSource={clients} 
+                                columns={columns}
+                                size="middle"
+                                rowKey='id'
+                                scroll={{ y: 550 }}
+                            />
+                        </Col>
+                    </Row>
+                </Loading>
             </Container>
         )
     }
-
-
 }
 
 export default ManageClients;

@@ -23,6 +23,10 @@ function App() {
 						component={LinkRouter}	
 					/>
 					<Route
+						path={'/api-logs'}
+						component={LinkRouter}	
+					/>
+					<Route
 						path={'/groups'}
 						component={LinkRouter}	
 					/>
