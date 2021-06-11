@@ -178,7 +178,7 @@ class ManageClientsForm extends Component {
         const { Item } = Form;
         const { Title } =  Typography;
         const { Option } = Select;
-        const { apiList, clientData, loading, disabledSwitch, showWidget, groupId } = this.state;
+        const { apiList, clientData, loading, disabledSwitch, showWidget, groupId, isEditing } = this.state;
        
         return(
             <Container>
@@ -303,6 +303,13 @@ class ManageClientsForm extends Component {
                                 </Form.Item>
  
                                 { showWidget ? <Widget groupId={groupId}/> : null}
+                            </Col>
+                            <Col sm={24}>
+                                <Item>
+                                    <Button type="primary" htmlType="submit">
+                                        { isEditing ? "Edit Client" : "Save Client" }
+                                    </Button>
+                                </Item>
                             </Col>
                         </Row>
                     </Form>
