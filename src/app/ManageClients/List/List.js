@@ -6,6 +6,7 @@ import { UserAddOutlined, UserDeleteOutlined, EditOutlined} from '@ant-design/ic
 import * as ENDPOINTS from '../../../shared/constants/settings';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { openNotificationWithIcon } from '../../../shared/components/Alert/Alert'
 
 class ManageClients extends Component {
     state = {
@@ -32,8 +33,7 @@ class ManageClients extends Component {
             })
             console.log(responseData);
         } catch (error) {
-            alert('There was an error', error.message)
-            console.log(error);
+            openNotificationWithIcon('error', 'Error', error.message)
         } finally {
             this.setLoading(false);
         }

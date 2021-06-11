@@ -9,6 +9,7 @@ import './Form.scss';
 import { LoadingOutlined, PlusOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Loading } from '../../../shared/components/Loading/Loading';
 import { Widget } from '../../../shared/components/Widget/Widget';
+import { openNotificationWithIcon } from '../../../shared/components/Alert/Alert';
 
 class ManageClientsForm extends Component {
     formRef = React.createRef();
@@ -112,28 +113,29 @@ class ManageClientsForm extends Component {
     }
     
     onFinish = async (values) => {
+        console.log(values);
+        this.setLoading(true)
         try {
-            this.setLoading(true)
             const clientUrl = ENDPOINTS.URL + ENDPOINTS.GET_CLIENT;
-            const clients = {
+            const clientName = values.client_name;
+            const clientGroupId = values.group_id;
+            let client = {
                 client: {
-                    client_name: values.client_name,
-                    group_id: values.group_id,
-                    email: values.email,
-                    phone_number: values.phone_number,
+                    ...values.client,
                     user_id: 1
                 }
             }
             let response = await axios.post(
-                clientUrl, clients
+                clientUrl, client
             );
             let responseData = await response.data;
             this.updateApiSettings(responseData.id, values.api_setting);
         } catch (error) {
-            alert('There was an error', error.message)
-            console.log(error);
+            openNotificationWithIcon('error', 'Client Error', error.message)
         } finally {
             this.setLoading(false);
+            this.props.history.push("/clients");
+            openNotificationWithIcon('success', 'Client Created', 'Client was Created Succesfully')
         }
     };
 
@@ -197,7 +199,7 @@ class ManageClientsForm extends Component {
                             <Col lg={8}>
                                 <Title level={2}>Basic Information</Title>                            
                                 <Item
-                                    name="client_name"
+                                    name={['client', 'client_name']}
                                     label="Client Name"
                                     rules={[
                                         {
@@ -213,7 +215,7 @@ class ManageClientsForm extends Component {
                                 </Item>
                                 <Item 
                                     label="Client Group ID"
-                                    name="group_id"
+                                    name={['client', 'group_id']}
                                     rules={[
                                         {
                                             required: true,
@@ -224,18 +226,18 @@ class ManageClientsForm extends Component {
                                     required 
                                     tooltip="This is a required field"
                                 >
-                                    <Input onChange={this.hasGroupId} value={clientData.group_id} placeholder="Group ID" disabled={clientData.group_id ? true : false} />
+                                    <Input onChange={this.hasGroupId} placeholder="Group ID" disabled={ clientData.group_id ? true : false} />
                                 </Item>
                                 <Item 
                                     label="Website URL" 
-                                    name="client_site_url"
+                                    name={['client', 'client_site_url']}
                                     tooltip={{ title: 'Clients Website', icon: <InfoCircleOutlined /> }}
                                 >
                                     <Input value={clientData.client_site_url} placeholder="Website URL" />
                                 </Item>
                                 <Item 
                                     label="Email"
-                                    name="email" 
+                                    name={['client', 'email']}
                                     required 
                                     rules={[
                                         {
@@ -251,7 +253,7 @@ class ManageClientsForm extends Component {
                                 </Item>
                                 <Item 
                                     label="Phone Number"
-                                    name="phone_number" 
+                                    name={['client', 'phone_number']}
                                     required 
                                     rules={[
                                         {
@@ -286,7 +288,6 @@ class ManageClientsForm extends Component {
                                         allowClear
                                         autoClearSearchValue
                                         showSearch
-           
                                         placeholder="Select API"
                                         optionFilterProp="children" 
                                         filterOption={(input, option) =>
@@ -298,9 +299,9 @@ class ManageClientsForm extends Component {
                                         })}
                                     </Select>
                                 </Item>
-                                <Form.Item label="Enable Widget" name="has_widget">
+                                <Item label="Enable Widget" name={['client', 'has_widget']}>
                                     <Switch onChange={this.showOrHideWidget} checked={showWidget} disabled={disabledSwitch}/>
-                                </Form.Item>
+                                </Item>
  
                                 { showWidget ? <Widget groupId={groupId}/> : null}
                             </Col>
