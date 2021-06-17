@@ -52,8 +52,8 @@ class ManageClients extends Component {
                 title: 'ID',
                 dataIndex: 'id',
                 key: "id",
-                defaultSortOrder: 'descend',
                 sorter: (a, b) => a.id - b.id,
+                defaultSortOrder: 'ascend'
             },
             {
                 title: 'Client Name',

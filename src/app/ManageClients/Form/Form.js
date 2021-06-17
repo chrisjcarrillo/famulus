@@ -130,8 +130,6 @@ class ManageClientsForm extends Component {
                 clientSettingUrl, clientSetting
             );
             let responseData = await response.data;
-            console.log(responsData)
-
         } catch (error) {
             alert('There was an error', error.message)
             console.log(error);
