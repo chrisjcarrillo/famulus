@@ -333,9 +333,6 @@ class ManageClientsForm extends Component {
             <Container>
                 <Loading loadingState={loading}>
                     <Form 
-                        initialValues={{
-                            client_name: clientData.client_name || ""
-                        }}
                         ref={this.formRef}
                         layout={'vertical'}
                         onFinish={this.onFinish}
