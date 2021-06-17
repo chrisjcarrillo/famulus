@@ -29,6 +29,7 @@ class ManageClientsForm extends Component {
             loading: type 
         });
 	}
+
     // Get Current API
     getApi = async () => {
         try {
@@ -82,7 +83,7 @@ class ManageClientsForm extends Component {
                         email: this.state.clientData.email,
                         phone_number: this.state.clientData.phone_number,
                     },
-                    api_setting: this.state.clientData.api_setting.name,
+                    api_setting: this.state.clientData.api_setting.id,
                     client_setting: {
                         has_widget: has_widget,
                         client_logo: clientImage
@@ -97,22 +98,80 @@ class ManageClientsForm extends Component {
         }
     }
 
-    // Submit API Settings
-    updateApiSettings = async (client, api_setting) => {
+    updateClientSettings = async (client, body, file) => {
         try {
-            this.setLoading(true)
-            const clientUrl = ENDPOINTS.URL + 'client_api_settings';
-            const clients = {
-                client_api_setting: {
-                    api_setting_id: api_setting,
-                    client_id: client
+            const clientSettingUrl = ENDPOINTS.URL + 'client_settings/' + client;
+            let urlRequest =  ENDPOINTS.URL + "presigned_url";
+            let checkFile = await fileChecksum(file.file);
+            let fileBody = {
+                file: {
+                    filename: file.file.name,
+                    byte_size: file.file.size,
+                    checksum: checkFile,
+                    content_type: file.file.type,
+                    metadata: {                        
+                        "message": "Image for parsing"
+                    }
+                }
+            };
+            let fileRequest = await axios.post(urlRequest, fileBody);    
+            if(fileRequest.data){
+                let s3Request = await axios.put(fileRequest.data.direct_upload.url, file.file, {
+                    headers: fileRequest.data.direct_upload.headers
+                })
+            }
+            let clientSetting = {
+                client_setting: {
+                    ...body,
+                    widget_client_logo: fileRequest.data.blob_signed_id ? fileRequest.data.blob_signed_id : ""
                 }
             }
-            let response = await axios.post(
-                clientUrl, clients
+            let response = await axios.patch(
+                clientSettingUrl, clientSetting
             );
             let responseData = await response.data;
-            console.log(responseData)
+            console.log(responsData)
+
+        } catch (error) {
+            alert('There was an error', error.message)
+            console.log(error);
+        } finally {
+            this.setLoading(false);
+        }
+    }
+
+    // Submit API Settings
+    updateApiSettings = async (client, api_setting) => {
+        const { isEditing } = this.state;
+        let id = this.props.match.params.id;
+        try {
+            if(!isEditing){
+                this.setLoading(true)
+                const clientUrl = ENDPOINTS.URL + 'client_api_settings';
+                const clients = {
+                    client_api_setting: {
+                        api_setting_id: api_setting,
+                        client_id: client
+                    }
+                }
+                let response = await axios.post(
+                    clientUrl, clients
+                );
+                let responseData = await response.data;
+            } else {
+                this.setLoading(true)
+                const clientUrl = ENDPOINTS.URL + 'client_api_settings/' + client;
+                const clients = {
+                    client_api_setting: {
+                        api_setting_id: api_setting,
+                    }
+                }
+                let response = await axios.patch(
+                    clientUrl, clients
+                );
+                let responseData = await response.data;
+            }
+            
         } catch (error) {
             alert('There was an error', error.message)
             console.log(error);
@@ -155,48 +214,77 @@ class ManageClientsForm extends Component {
     // Submit Form
     onFinish = async (values) => {
         this.setLoading(true)
+        const { isEditing } = this.state;
+        let id = this.props.match.params.id;
+        let client;
+        console.log(values)
         try {
-            console.log(values)
-            const clientUrl = ENDPOINTS.URL + ENDPOINTS.GET_CLIENT;
-            let checkFile = await fileChecksum(values.file.file);
-            let urlRequest =  ENDPOINTS.URL + "presigned_url";
-            let fileBody = {
-                file: {
-                    filename: values.file.file.name,
-                    byte_size: values.file.file.size,
-                    checksum: checkFile,
-                    content_type: values.file.file.type,
-                    metadata: {                        
-                        "message": "Image for parsing"
+            if (!isEditing){
+                console.log(values)
+                const clientUrl = ENDPOINTS.URL + ENDPOINTS.GET_CLIENT;
+                if(values.file !== undefined ){
+                    let checkFile = await fileChecksum(values.file.file);
+                    let urlRequest =  ENDPOINTS.URL + "presigned_url";
+                    let fileBody = {
+                        file: {
+                            filename: values.file.file.name,
+                            byte_size: values.file.file.size,
+                            checksum: checkFile,
+                            content_type: values.file.file.type,
+                            metadata: {                        
+                                "message": "Image for parsing"
+                            }
+                        }
+                    };
+                    let fileRequest = await axios.post(urlRequest, fileBody);
+                    console.log(fileRequest.data)         
+                    if(fileRequest.data){
+                        let s3Request = await axios.put(fileRequest.data.direct_upload.url, values.file.file, {
+                            headers: fileRequest.data.direct_upload.headers
+                        })
+                    }
+                    client = {
+                        client: {
+                            user_id: 1,
+                            ...values.client,
+                            client_setting_attributes: {
+                                has_widget: values.client_setting.has_widget,
+                                widget_client_logo: fileRequest.data.blob_signed_id
+                            }
+                        },
                     }
                 }
-            };
-
-            let fileRequest = await axios.post(urlRequest, fileBody);
-            console.log(fileRequest.data)        
-            
-            if(fileRequest.data){
-                let s3Request = await axios.put(fileRequest.data.direct_upload.url, values.file.file, {
-                    headers: fileRequest.data.direct_upload.headers
-                })
-            }
-            
-            let client = {
-                client: {
-                    user_id: 1,
-                    ...values.client,
-                    client_setting_attributes: {
-                        has_widget: values.client_setting.has_widget,
-                        widget_client_logo: fileRequest.data.blob_signed_id
+                if(values.file == undefined){
+                    client = {
+                        client: {
+                            user_id: 1,
+                            ...values.client,
+                            client_setting_attributes: {
+                                has_widget: values.client_setting.has_widget,
+                            }
+                        },
                     }
-                },
+                }
+                let response = await axios.post(
+                    clientUrl, client
+                );
+                let responseData = await response.data;
+                if (values.api_setting !== undefined) this.updateApiSettings(responseData.id, values.api_setting);
+            } else {
+                const clientUrl = ENDPOINTS.URL + ENDPOINTS.GET_CLIENT + id ;
+                if(values.client) delete values.client.group_id
+                let client = {
+                    client: {
+                        ...values.client,
+                    }
+                }
+                let response = await axios.patch(
+                    clientUrl, client
+                );
+                let responseData = await response.data;
+                if (values.file !== undefined) this.updateClientSettings(responseData.id, values.client_setting, values.file)
+                // if (typeof values.api_setting !== string)this.updateApiSettings(responseData.id, values.api_setting);
             }
-            let response = await axios.post(
-                clientUrl, client
-            );
-            let responseData = await response.data;
-            this.updateApiSettings(responseData.id, values.api_setting);
-
         } catch (error) {
             openNotificationWithIcon('error', 'Client Error', error.message);
         } finally {
