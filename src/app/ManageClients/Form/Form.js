@@ -62,10 +62,9 @@ class ManageClientsForm extends Component {
             this.setState({
                 clientData: responseData,
             })
-            let clientStateData = this.state.clientData.client_setting;
+            const clientStateData = this.state.clientData.client_setting;
             let has_widget = clientStateData !== undefined ? clientStateData.has_widget : true;
-            let clientImage = clientStateData.client_logo !== undefined ? clientStateData.client_logo : null;
-
+            let clientImage = clientStateData.hasOwnProperty('client_logo') ? clientStateData.client_logo : null;
             const groupId = this.state.clientData.group_id;
             if(has_widget && groupId){
                 this.setState({
