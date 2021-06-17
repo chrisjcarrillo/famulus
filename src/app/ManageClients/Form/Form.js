@@ -1,19 +1,18 @@
 import React, { Component } from 'react';
 import { Container } from 'react-bootstrap';
 import { Button, Col, Divider, Form, Input, Row, Typography, Select, Upload, Switch } from 'antd';
-import { HexColorPicker, HexColorInput  } from "react-colorful";
-
-import * as ENDPOINTS from '../../../shared/constants/settings';
-import axios from 'axios';
-import './Form.scss';
-import { LoadingOutlined, PlusOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Loading } from '../../../shared/components/Loading/Loading';
 import { Widget } from '../../../shared/components/Widget/Widget';
 import { openNotificationWithIcon } from '../../../shared/components/Alert/Alert';
+import { fileChecksum } from '../../../shared/utils/checksum';
+import * as ENDPOINTS from '../../../shared/constants/settings';
+import axios from 'axios';
+import './Form.scss';
 
 class ManageClientsForm extends Component {
     formRef = React.createRef();
-
+    
     state = {
         isEditing: false,
         clientData: [],
@@ -22,7 +21,7 @@ class ManageClientsForm extends Component {
         disabledSwitch: true,
         showWidget: false,
         groupId: "",
-        testColor: "",
+        clientProfileLog: ""
     }
 
     setLoading = (type) => {
@@ -30,7 +29,7 @@ class ManageClientsForm extends Component {
             loading: type 
         });
 	}
-
+    // Get Current API
     getApi = async () => {
         try {
             this.setLoading(true)
@@ -50,6 +49,7 @@ class ManageClientsForm extends Component {
         }
     }
 
+    // Get Current Client Settings
     getClient = async (client) => {
         try {
             this.setLoading(true)
@@ -61,7 +61,10 @@ class ManageClientsForm extends Component {
             this.setState({
                 clientData: responseData,
             })
-            const has_widget = this.state.clientData.client_setting.has_widget;
+            let clientStateData = this.state.clientData.client_setting;
+            let has_widget = clientStateData !== undefined ? clientStateData.has_widget : true;
+            let clientImage = clientStateData.client_logo !== undefined ? clientStateData.client_logo : null;
+
             const groupId = this.state.clientData.group_id;
             if(has_widget && groupId){
                 this.setState({
@@ -72,13 +75,18 @@ class ManageClientsForm extends Component {
             }
             if(this.state.isEditing){
                 this.formRef.current.setFieldsValue({
-                    client_name: this.state.clientData.client_name,
-                    group_id: this.state.clientData.group_id,
-                    client_site_url: this.state.clientData.client_site_url,
-                    email: this.state.clientData.email,
-                    phone_number: this.state.clientData.phone_number,
+                    client:{
+                        client_name: this.state.clientData.client_name,
+                        group_id: this.state.clientData.group_id,
+                        client_site_url: this.state.clientData.client_site_url,
+                        email: this.state.clientData.email,
+                        phone_number: this.state.clientData.phone_number,
+                    },
                     api_setting: this.state.clientData.api_setting.name,
-                    has_widget: has_widget,
+                    client_setting: {
+                        has_widget: has_widget,
+                        client_logo: clientImage
+                    }
                 }) 
             }
         } catch (error) {
@@ -89,6 +97,7 @@ class ManageClientsForm extends Component {
         }
     }
 
+    // Submit API Settings
     updateApiSettings = async (client, api_setting) => {
         try {
             this.setLoading(true)
@@ -112,38 +121,90 @@ class ManageClientsForm extends Component {
         }
     }
     
+    getBase64 = (img, callback) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(img);
+        reader.onload = () => {
+          callback(reader.result);
+        };
+        reader.onerror = (error) => {
+          console.log('Error: ', error);
+        };
+    }
+
+    beforeUpload = (file) => {
+        return false;
+    }
+
+    handleChange = info => {
+        if (info.file.status === 'uploading') {
+          this.setState({ loading: true });
+          return;
+        }
+        if (info.file.status === 'done') {
+          // Get this url from response in real world.
+          getBase64(info.file.originFileObj, imageUrl =>
+            this.setState({
+              loading: false,
+              clientProfileLogo: imageUrl
+            })
+          );
+        }
+    };
+
+    // Submit Form
     onFinish = async (values) => {
-        console.log(values);
         this.setLoading(true)
         try {
+            console.log(values)
             const clientUrl = ENDPOINTS.URL + ENDPOINTS.GET_CLIENT;
-            const clientName = values.client_name;
-            const clientGroupId = values.group_id;
+            let checkFile = await fileChecksum(values.file.file);
+            let urlRequest =  ENDPOINTS.URL + "presigned_url";
+            let fileBody = {
+                file: {
+                    filename: values.file.file.name,
+                    byte_size: values.file.file.size,
+                    checksum: checkFile,
+                    content_type: values.file.file.type,
+                    metadata: {                        
+                        "message": "Image for parsing"
+                    }
+                }
+            };
+
+            let fileRequest = await axios.post(urlRequest, fileBody);
+            console.log(fileRequest.data)        
+            
+            if(fileRequest.data){
+                let s3Request = await axios.put(fileRequest.data.direct_upload.url, values.file.file, {
+                    headers: fileRequest.data.direct_upload.headers
+                })
+            }
+            
             let client = {
                 client: {
+                    user_id: 1,
                     ...values.client,
-                    user_id: 1
-                }
+                    client_setting_attributes: {
+                        has_widget: values.client_setting.has_widget,
+                        widget_client_logo: fileRequest.data.blob_signed_id
+                    }
+                },
             }
             let response = await axios.post(
                 clientUrl, client
             );
             let responseData = await response.data;
             this.updateApiSettings(responseData.id, values.api_setting);
+
         } catch (error) {
-            openNotificationWithIcon('error', 'Client Error', error.message)
+            openNotificationWithIcon('error', 'Client Error', error.message);
         } finally {
             this.setLoading(false);
             this.props.history.push("/clients");
             openNotificationWithIcon('success', 'Client Created', 'Client was Created Succesfully')
         }
     };
-
-    setColor = (val) =>{
-        this.setState({
-            testColor: val
-        })
-    }
 
     hasGroupId = (value, e) => {
         if(value.target.value.length > 2 && value.target.value !== ""){
@@ -299,11 +360,30 @@ class ManageClientsForm extends Component {
                                         })}
                                     </Select>
                                 </Item>
-                                <Item label="Enable Widget" name={['client', 'has_widget']}>
+                                <Item label="Enable Widget" name={['client_setting', 'has_widget']}>
                                     <Switch onChange={this.showOrHideWidget} checked={showWidget} disabled={disabledSwitch}/>
                                 </Item>
  
                                 { showWidget ? <Widget groupId={groupId}/> : null}
+                            </Col>
+                            <Col lg={16}>
+                                <Title level={2}>Branding</Title>
+                                <Item label="Client Logo" name="file">
+                                    <Upload
+                                        name="avatar"
+                                        listType="picture-card"
+                                        className="avatar-uploader"
+                                        beforeUpload={this.beforeUpload}
+                                        onChange={this.handleChange}
+                                    >
+                                        { clientData.client_setting && !clientData.client_setting.logo ? (
+                                            <img src={clientData.client_setting.client_logo} alt="avatar" style={{ maxWidth: '75px' }} />
+                                        ) : ( <div>
+                                            <PlusOutlined />
+                                            <div style={{ marginTop: 8 }}>Upload</div>
+                                        </div>) }
+                                    </Upload>
+                                </Item>
                             </Col>
                             <Col sm={24}>
                                 <Item>

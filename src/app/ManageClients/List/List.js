@@ -111,12 +111,7 @@ class ManageClients extends Component {
                 key: "group_id"
             }
         ]
-
-        const tableProps = {
-           
-        };
-
-
+        
         return(
             <Container>
                 <Loading loadingState={loading}>
