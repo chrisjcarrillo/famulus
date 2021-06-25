@@ -104,6 +104,20 @@ class ManageClientsForm extends Component {
                     groupId: groupId
                 })
             }
+            if(clientStateData){
+                this.setState({
+                    clientColor: clientStateData.client_color,
+                    textColor: clientStateData.text_color,
+                    buttonColor: clientStateData.button_color,
+                    searchEngineBackgroundColor: clientStateData.search_engine_background_color,
+                    searchEngineButtonColor: clientStateData.search_engine_button_color,
+                    resultPharmacyTextColor: clientStateData.result_pharmacy_text_color,
+                    discountColor: clientStateData.discount_color,
+                    resultButtonColor: clientStateData.result_button_color,
+                    couponTextColor: clientStateData.coupon_text_color,
+                    couponSectionBackgroundColor: clientStateData.coupon_section_background_color,
+                })
+            }
             if(this.state.isEditing){
                 this.formRef.current.setFieldsValue({
                     client:{
@@ -131,36 +145,50 @@ class ManageClientsForm extends Component {
     // Submit Client Settings
     updateClientSettings = async (client, body, file) => {
         try {
-            const clientSettingUrl = ENDPOINTS.URL + 'client_settings/' + client;
-            let urlRequest =  ENDPOINTS.URL + "presigned_url";
-            let checkFile = await fileChecksum(file.file);
-            let fileBody = {
-                file: {
-                    filename: file.file.name,
-                    byte_size: file.file.size,
-                    checksum: checkFile,
-                    content_type: file.file.type,
-                    metadata: {                        
-                        "message": "Image for parsing"
+            if(file !== undefined){
+                const clientSettingUrl = ENDPOINTS.URL + 'client_settings/' + client;
+                let urlRequest =  ENDPOINTS.URL + "presigned_url";
+                let checkFile = await fileChecksum(file.file);
+                let fileBody = {
+                    file: {
+                        filename: file.file.name,
+                        byte_size: file.file.size,
+                        checksum: checkFile,
+                        content_type: file.file.type,
+                        metadata: {                        
+                            "message": "Image for parsing"
+                        }
+                    }
+                };
+                let fileRequest = await axios.post(urlRequest, fileBody);    
+                if(fileRequest.data){
+                    let s3Request = await axios.put(fileRequest.data.direct_upload.url, file.file, {
+                        headers: fileRequest.data.direct_upload.headers
+                    })
+                }
+                let clientSetting = {
+                    client_setting: {
+                        ...body,
+                        widget_client_logo: fileRequest.data.blob_signed_id ? fileRequest.data.blob_signed_id : ""
                     }
                 }
-            };
-            let fileRequest = await axios.post(urlRequest, fileBody);    
-            if(fileRequest.data){
-                let s3Request = await axios.put(fileRequest.data.direct_upload.url, file.file, {
-                    headers: fileRequest.data.direct_upload.headers
-                })
-            }
-            let clientSetting = {
-                client_setting: {
-                    ...body,
-                    widget_client_logo: fileRequest.data.blob_signed_id ? fileRequest.data.blob_signed_id : ""
+                let response = await axios.patch(
+                    clientSettingUrl, clientSetting
+                );
+                let responseData = await response.data;   
+            } else {
+                const clientSettingUrl = ENDPOINTS.URL + 'client_settings/' + client;
+                let clientSetting = {
+                    client_setting: {
+                        ...body,
+                    }
                 }
+                let response = await axios.patch(
+                    clientSettingUrl, clientSetting
+                );
+                let responseData = await response.data;
             }
-            let response = await axios.patch(
-                clientSettingUrl, clientSetting
-            );
-            let responseData = await response.data;
+
         } catch (error) {
             alert('There was an error', error.message)
             console.log(error);
@@ -289,6 +317,7 @@ class ManageClientsForm extends Component {
                             user_id: 1,
                             ...values.client,
                             client_setting_attributes: {
+                                ...client_colors,
                                 has_widget: values.client_setting.has_widget,
                                 widget_client_logo: fileRequest.data.blob_signed_id
                             }
@@ -329,7 +358,7 @@ class ManageClientsForm extends Component {
                     clientUrl, client
                 );
                 let responseData = await response.data;
-                if (values.file !== undefined) this.updateClientSettings(responseData.id, client_setting, values.file)
+                this.updateClientSettings(responseData.id, client_setting, values.file)
                 if (values.api_setting) this.updateApiSettings(responseData.id, values.api_setting);
             }
             this.props.history.push("/clients");
@@ -685,9 +714,9 @@ class ManageClientsForm extends Component {
                                             <ColorPicker 
                                                 mainColor={couponSectionBackgroundColor}
                                                 displayColorPicker={displayCouponSectionBackgroundPicker}
-                                                handleClick={this.CouponBackgroundPickerClick}
-                                                handleClose={this.CouponBackgroundPickerClose}
-                                                handleChange={this.CouponBackgroundPickerChange}
+                                                handleClick={this.handleCouponBackgroundPickerClick}
+                                                handleClose={this.handleCouponBackgroundPickerClose}
+                                                handleChange={this.handleCouponBackgroundPickerChange}
                                             />
                                         </Item>     
                                     </Col>
