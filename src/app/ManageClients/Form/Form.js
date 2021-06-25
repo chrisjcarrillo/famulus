@@ -6,6 +6,7 @@ import { Loading } from '../../../shared/components/Loading/Loading';
 import { Widget } from '../../../shared/components/Widget/Widget';
 import { openNotificationWithIcon } from '../../../shared/components/Alert/Alert';
 import { fileChecksum } from '../../../shared/utils/checksum';
+import { ColorPicker } from '../../../shared/components/ColorPicker/ColorPicker';
 import * as ENDPOINTS from '../../../shared/constants/settings';
 import axios from 'axios';
 import './Form.scss';
@@ -18,7 +19,31 @@ class ManageClientsForm extends Component {
         clientData: [],
         apiList: [],
         loading: false,
+       
         disabledSwitch: true,
+
+        displayClientColorPicker: false,
+        displayTextColorPicker: false,
+        displayButtonColorPicker: false,
+        displaySearchEngineBackgroundPicker: false,
+        displaySearchEngineButtonPicker: false,
+        displayResultPharmacyTextPicker: false,
+        displayDiscountColorPicker: false,
+        displayResultButtonPicker: false,
+        displayCouponTextPicker: false,
+        displayCouponSectionBackgroundPicker: false,
+
+        clientColor: '#3171b9',
+        textColor: '#666',
+        buttonColor: '#0071b9',
+        searchEngineBackgroundColor: '#fff',
+        searchEngineButtonColor: '#0071b9',
+        resultPharmacyTextColor: '#000',
+        discountColor: '#008000',
+        resultButtonColor: '#2b20d1',
+        couponTextColor: '#000',
+        couponSectionBackgroundColor: '#e6e6e6',
+
         showWidget: false,
         groupId: "",
         clientProfileLog: ""
@@ -72,6 +97,12 @@ class ManageClientsForm extends Component {
                     disabledSwitch: false,
                     groupId: groupId
                 })
+            }else if(!has_widget && groupId) {
+                this.setState({
+                    showWidget: false,
+                    disabledSwitch: false,
+                    groupId: groupId
+                })
             }
             if(this.state.isEditing){
                 this.formRef.current.setFieldsValue({
@@ -96,7 +127,8 @@ class ManageClientsForm extends Component {
             this.setLoading(false);
         }
     }
-
+    
+    // Submit Client Settings
     updateClientSettings = async (client, body, file) => {
         try {
             const clientSettingUrl = ENDPOINTS.URL + 'client_settings/' + client;
@@ -213,7 +245,19 @@ class ManageClientsForm extends Component {
         this.setLoading(true)
         const { isEditing } = this.state;
         let id = this.props.match.params.id;
-        let client;
+        let client, client_colors;
+        client_colors = {
+            client_color: this.state.clientColor,
+            text_color: this.state.textColor,
+            button_color: this.state.buttonColor,
+            search_engine_background_color: this.state.searchEngineBackgroundColor,
+            search_engine_button_color: this.state.searchEngineButtonColor,
+            result_pharmacy_text_color: this.state.resultPharmacyTextColor,
+            discount_color: this.state.discountColor,
+            result_button_color: this.state.resultButtonColor,
+            coupon_text_color: this.state.couponTextColor,
+            coupon_section_background_color: this.state.couponSectionBackgroundColor
+        }
         console.log(values)
         try {
             if (!isEditing){
@@ -258,6 +302,7 @@ class ManageClientsForm extends Component {
                             ...values.client,
                             client_setting_attributes: {
                                 has_widget: values.client_setting.has_widget,
+                                ...client_colors,
                             }
                         },
                     }
@@ -268,6 +313,7 @@ class ManageClientsForm extends Component {
                 let responseData = await response.data;
                 if (values.api_setting !== undefined) this.updateApiSettings(responseData.id, values.api_setting);
             } else {
+                console.log(values)
                 const clientUrl = ENDPOINTS.URL + ENDPOINTS.GET_CLIENT + id ;
                 if(values.client) delete values.client.group_id
                 let client = {
@@ -275,19 +321,23 @@ class ManageClientsForm extends Component {
                         ...values.client,
                     }
                 }
+                let client_setting = {
+                    ...values.client_setting,
+                    ...client_colors
+                }
                 let response = await axios.patch(
                     clientUrl, client
                 );
                 let responseData = await response.data;
-                if (values.file !== undefined) this.updateClientSettings(responseData.id, values.client_setting, values.file)
-                // if (typeof values.api_setting !== string)this.updateApiSettings(responseData.id, values.api_setting);
+                if (values.file !== undefined) this.updateClientSettings(responseData.id, client_setting, values.file)
+                if (values.api_setting) this.updateApiSettings(responseData.id, values.api_setting);
             }
+            this.props.history.push("/clients");
+            openNotificationWithIcon('success', 'Client Created', 'Client was Created Succesfully');
         } catch (error) {
             openNotificationWithIcon('error', 'Client Error', error.message);
         } finally {
             this.setLoading(false);
-            this.props.history.push("/clients");
-            openNotificationWithIcon('success', 'Client Created', 'Client was Created Succesfully')
         }
     };
 
@@ -310,7 +360,45 @@ class ManageClientsForm extends Component {
             showWidget: value
         })
     }
+    // Color Picker Functions
+    handleClientColorPickerClick = () => {this.setState({ displayClientColorPicker: !this.state.displayClientColorPicker })}
+    handleClientColorPickerClose = () => {this.setState({ displayClientColorPicker: false })}
+    handleClientColorPickerChange = (color) => {this.setState({ clientColor: color.hex})}
+    handleTextColorPickerClick = () => {this.setState({ displayTextColorPicker: !this.state.displayTextColorPicker })}
+    handleTextColorPickerClose = () => {this.setState({ displayTextColorPicker: false })}
+    handleTextColorPickerChange = (color) => {this.setState({ textColor: color.hex})}
+    handleButtonColorPickerClick = () => {this.setState({ displayButtonColorPicker: !this.state.displayButtonColorPicker })}
+    handleButtonColorPickerClose = () => {this.setState({ displayButtonColorPicker: false })}
+    handleButtonColorPickerChange = (color) => {this.setState({ buttonColor: color.hex})}
+    
+    handleSearchEngineBgPickerClick = () => {this.setState({ displaySearchEngineBackgroundPicker: !this.state.displaySearchEngineBackgroundPicker })}
+    handleSearchEngineBgPickerClose = () => {this.setState({ displaySearchEngineBackgroundPicker: false })}
+    handleSearchEngineBgPickerChange = (color) => {this.setState({ searchEngineBackgroundColor: color.hex})}
 
+    handleSearchEngineButtonPickerClick = () => {this.setState({ displaySearchEngineButtonPicker: !this.state.displaySearchEngineButtonPicker })}
+    handleSearchEngineButtonPickerClose = () => {this.setState({ displaySearchEngineButtonPicker: false })}
+    handleSearchEngineButtonPickerChange = (color) => {this.setState({ searchEngineButtonColor: color.hex})}
+
+    handlePharmacyTextPickerClick = () => {this.setState({ displayResultPharmacyTextPicker: !this.state.displayResultPharmacyTextPicker })}
+    handlePharmacyTextPickerClose = () => {this.setState({ displayResultPharmacyTextPicker: false })}
+    handlePharmacyTextPickerChange = (color) => {this.setState({ resultPharmacyTextColor: color.hex})}
+
+    handleDiscountPickerClick = () => {this.setState({ displayDiscountColorPicker: !this.state.displayDiscountColorPicker })}
+    handleDiscountPickerClose = () => {this.setState({ displayDiscountColorPicker: false })}
+    handleDiscountPickerChange = (color) => {this.setState({ discountColor: color.hex})}
+
+    handleResultButtonPickerClick = () => {this.setState({ displayResultButtonPicker: !this.state.displayResultButtonPicker })}
+    handleResultButtonPickerClose = () => {this.setState({ displayResultButtonPicker: false })}
+    handleResultButtonPickerChange = (color) => {this.setState({ resultButtonColor: color.hex})}
+
+    handleCouponTextPickerClick = () => {this.setState({ displayCouponTextPicker: !this.state.displayCouponTextPicker })}
+    handleCouponTextPickerClose = () => {this.setState({ displayCouponTextPicker: false })}
+    handleCouponTextPickerChange = (color) => {this.setState({ couponTextColor: color.hex})}
+
+    handleCouponBackgroundPickerClick = () => {this.setState({ displayCouponSectionBackgroundPicker: !this.state.displayCouponSectionBackgroundPicker })}
+    handleCouponBackgroundPickerClose = () => {this.setState({ displayCouponSectionBackgroundPicker: false })}
+    handleCouponBackgroundPickerChange = (color) => {this.setState({ couponSectionBackgroundColor: color.hex})}
+    
     async componentDidMount(){
         let id = this.props.match.params.id;
         if (id) {
@@ -326,7 +414,34 @@ class ManageClientsForm extends Component {
         const { Item } = Form;
         const { Title } =  Typography;
         const { Option } = Select;
-        const { apiList, clientData, loading, disabledSwitch, showWidget, groupId, isEditing } = this.state;
+        const { 
+            apiList, 
+            clientData, 
+            loading, 
+
+            clientColor,
+            textColor,
+            buttonColor,
+            searchEngineBackgroundColor,
+            searchEngineButtonColor,
+            resultPharmacyTextColor,
+            discountColor,
+            resultButtonColor,
+            couponTextColor,
+            couponSectionBackgroundColor,
+
+            displayClientColorPicker,
+            displayTextColorPicker,
+            displayButtonColorPicker,
+            displaySearchEngineBackgroundPicker,
+            displaySearchEngineButtonPicker,
+            displayResultPharmacyTextPicker,
+            displayDiscountColorPicker,
+            displayResultButtonPicker,
+            displayCouponTextPicker,
+            displayCouponSectionBackgroundPicker,
+
+            disabledSwitch, showWidget, groupId, isEditing } = this.state;
        
         return(
             <Container>
@@ -339,7 +454,7 @@ class ManageClientsForm extends Component {
                         name="control-ref"
                     >
                         <Row gutter={[24, 24]} type="flex" justify="space-between">
-                            <Col lg={8}>
+                            <Col lg={7}>
                                 <Title level={2}>Basic Information</Title>                            
                                 <Item
                                     name={['client', 'client_name']}
@@ -411,7 +526,7 @@ class ManageClientsForm extends Component {
                                     <Input value={clientData.phone_number} placeholder="Phone Number" />
                                 </Item>   
                             </Col>
-                            <Col lg={16}>
+                            <Col lg={17}>
                                 <Title level={2}>API</Title>
                                 <Item 
                                     name="api_setting"
@@ -445,31 +560,142 @@ class ManageClientsForm extends Component {
                                 <Item label="Enable Widget" name={['client_setting', 'has_widget']}>
                                     <Switch onChange={this.showOrHideWidget} checked={showWidget} disabled={disabledSwitch}/>
                                 </Item>
- 
                                 { showWidget ? <Widget groupId={groupId}/> : null}
-                            </Col>
-                            <Col lg={16}>
-                                <Title level={2}>Branding</Title>
-                                <Item label="Client Logo" name="file">
-                                    <Upload
-                                        name="avatar"
-                                        listType="picture-card"
-                                        className="avatar-uploader"
-                                        beforeUpload={this.beforeUpload}
-                                        onChange={this.handleChange}
-                                    >
-                                        { clientData.client_setting && !clientData.client_setting.logo ? (
-                                            <img src={clientData.client_setting.client_logo} alt="avatar" style={{ maxWidth: '75px' }} />
-                                        ) : ( <div>
-                                            <PlusOutlined />
-                                            <div style={{ marginTop: 8 }}>Upload</div>
-                                        </div>) }
-                                    </Upload>
-                                </Item>
+                                <Col lg={6}>
+                                    <Title level={2}>Branding</Title>
+                                    <Item label="Client Logo" name="file">
+                                        <Upload
+                                            name="avatar"
+                                            listType="picture-card"
+                                            className="avatar-uploader"
+                                            beforeUpload={this.beforeUpload}
+                                            onChange={this.handleChange}
+                                        >
+                                            { clientData.client_setting && !clientData.client_setting.logo ? (
+                                                <img src={clientData.client_setting.client_logo} alt="avatar" style={{ maxWidth: '75px' }} />
+                                            ) : ( <div>
+                                                <PlusOutlined />
+                                                <div style={{ marginTop: 8 }}>Upload</div>
+                                            </div>) }
+                                        </Upload>
+                                    </Item>               
+                                </Col>
+                                <Row gutter={[8, 2]} type="flex" justify="space-between">
+                                    <Col sm={8}>
+                                        <Item label="Client Color">
+                                            <ColorPicker 
+                                                mainColor={clientColor}
+                                                displayColorPicker={displayClientColorPicker}
+                                                handleClick={this. handleClientColorPickerClick}
+                                                handleClose={this.handleClientColorPickerClose}
+                                                handleChange={this.handleClientColorPickerChange}
+                                            />
+                                        </Item>     
+                                    </Col>
+                                    <Col sm={8}>
+                                        <Item label="Text Color">
+                                            <ColorPicker 
+                                                mainColor={textColor}
+                                                displayColorPicker={displayTextColorPicker}
+                                                handleClick={this.handleTextColorPickerClick}
+                                                handleClose={this.handleTextColorPickerClose}
+                                                handleChange={this.handleTextColorPickerChange}
+                                            />
+                                        </Item>     
+                                    </Col>
+                                    <Col sm={8}>
+                                        <Item label="Button Color">
+                                            <ColorPicker 
+                                                mainColor={buttonColor}
+                                                displayColorPicker={displayButtonColorPicker}
+                                                handleClick={this.handleButtonColorPickerClick}
+                                                handleClose={this.handleButtonColorPickerClose}
+                                                handleChange={this.handleButtonColorPickerChange}
+                                            />
+                                        </Item>     
+                                    </Col>
+                                    <Col sm={8}>
+                                        <Item label="Search Engine Background Color">
+                                            <ColorPicker 
+                                                mainColor={searchEngineBackgroundColor}
+                                                displayColorPicker={displaySearchEngineBackgroundPicker}
+                                                handleClick={this.handleSearchEngineBgPickerClick}
+                                                handleClose={this.handleSearchEngineBgPickerClose}
+                                                handleChange={this.handleSearchEngineBgPickerChange}
+                                            />
+                                        </Item>     
+                                    </Col>
+                                    <Col sm={8}>
+                                        <Item label="Search Engine Button Color">
+                                            <ColorPicker 
+                                                mainColor={searchEngineButtonColor}
+                                                displayColorPicker={displaySearchEngineButtonPicker}
+                                                handleClick={this.handleSearchEngineButtonPickerClick}
+                                                handleClose={this.handleSearchEngineButtonPickerClose}
+                                                handleChange={this.handleSearchEngineButtonPickerChange}
+                                            />
+                                        </Item>     
+                                    </Col>
+                                    <Col sm={8}>
+                                        <Item label="Pharmacy Text Color">
+                                            <ColorPicker 
+                                                mainColor={resultPharmacyTextColor}
+                                                displayColorPicker={displayResultPharmacyTextPicker}
+                                                handleClick={this.handlePharmacyTextPickerClick}
+                                                handleClose={this.handlePharmacyTextPickerClose}
+                                                handleChange={this.handlePharmacyTextPickerChange}
+                                            />
+                                        </Item>     
+                                    </Col>
+                                    <Col sm={8}>
+                                        <Item label="Discount Text Color">
+                                            <ColorPicker 
+                                                mainColor={discountColor}
+                                                displayColorPicker={displayDiscountColorPicker}
+                                                handleClick={this.handleDiscountPickerClick}
+                                                handleClose={this.handleDiscountPickerClose}
+                                                handleChange={this.handleDiscountPickerChange}
+                                            />
+                                        </Item>     
+                                    </Col>
+                                    <Col sm={8}>
+                                        <Item label="Result Button Color">
+                                            <ColorPicker 
+                                                mainColor={resultButtonColor}
+                                                displayColorPicker={displayResultButtonPicker}
+                                                handleClick={this.handleResultButtonPickerClick}
+                                                handleClose={this.handleResultButtonPickerClose}
+                                                handleChange={this.handleResultButtonPickerChange}
+                                            />
+                                        </Item>     
+                                    </Col>
+                                    <Col sm={8}>
+                                        <Item label="Coupon Text Color">
+                                            <ColorPicker 
+                                                mainColor={couponTextColor}
+                                                displayColorPicker={displayCouponTextPicker}
+                                                handleClick={this.handleCouponTextPickerClick}
+                                                handleClose={this.handleCouponTextPickerClose}
+                                                handleChange={this.handleCouponTextPickerChange}
+                                            />
+                                        </Item>     
+                                    </Col>
+                                    <Col sm={8}>
+                                        <Item label="Coupon Branding Background Color">
+                                            <ColorPicker 
+                                                mainColor={couponSectionBackgroundColor}
+                                                displayColorPicker={displayCouponSectionBackgroundPicker}
+                                                handleClick={this.CouponBackgroundPickerClick}
+                                                handleClose={this.CouponBackgroundPickerClose}
+                                                handleChange={this.CouponBackgroundPickerChange}
+                                            />
+                                        </Item>     
+                                    </Col>
+                                </Row>
                             </Col>
                             <Col sm={24}>
                                 <Item>
-                                    <Button type="primary" htmlType="submit">
+                                    <Button type="primary" htmlType="submit" loading={loading}>
                                         { isEditing ? "Edit Client" : "Save Client" }
                                     </Button>
                                 </Item>
